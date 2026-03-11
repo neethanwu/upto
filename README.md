@@ -1,6 +1,6 @@
 <p align="center">
   <br>
-  <img src="assets/icon.png" width="128" alt="upto icon">
+  <img src="assets/icon.png" width="80" alt="upto icon">
   <br>
 </p>
 

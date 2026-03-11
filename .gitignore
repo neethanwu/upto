@@ -3,6 +3,10 @@
 *.swp
 *~
 
+# Editor
+.vscode/
+.idea/
+
 # Xcode
 DerivedData/
 *.xcuserstate

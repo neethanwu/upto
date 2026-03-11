@@ -37,23 +37,27 @@ func drawIcon(size: CGFloat) -> NSImage {
     )!
     gradient.draw(in: bgPath, angle: -55)
 
-    // Scale factors relative to 72-unit viewBox mapped to icon size
-    let scale = s / 72.0
+    // Scale with inset — shrink triangles to ~65% and center
+    let inset: CGFloat = s * 0.18
+    let inner = s - inset * 2
+    let scale = inner / 72.0
+    let ox = inset  // offset x
+    let oy = inset  // offset y
 
     // Up triangle (left) — full white
     let upPath = NSBezierPath()
-    upPath.move(to: NSPoint(x: 22 * scale, y: s - 14 * scale))
-    upPath.line(to: NSPoint(x: 40 * scale, y: s - 42 * scale))
-    upPath.line(to: NSPoint(x: 4 * scale, y: s - 42 * scale))
+    upPath.move(to: NSPoint(x: ox + 22 * scale, y: s - (oy + 14 * scale)))
+    upPath.line(to: NSPoint(x: ox + 40 * scale, y: s - (oy + 42 * scale)))
+    upPath.line(to: NSPoint(x: ox + 4 * scale, y: s - (oy + 42 * scale)))
     upPath.close()
     NSColor(red: 0xF5/255, green: 0xF5/255, blue: 0xF7/255, alpha: 1).setFill()
     upPath.fill()
 
     // Down triangle (right) — muted white
     let downPath = NSBezierPath()
-    downPath.move(to: NSPoint(x: 50 * scale, y: s - 58 * scale))
-    downPath.line(to: NSPoint(x: 32 * scale, y: s - 30 * scale))
-    downPath.line(to: NSPoint(x: 68 * scale, y: s - 30 * scale))
+    downPath.move(to: NSPoint(x: ox + 50 * scale, y: s - (oy + 58 * scale)))
+    downPath.line(to: NSPoint(x: ox + 32 * scale, y: s - (oy + 30 * scale)))
+    downPath.line(to: NSPoint(x: ox + 68 * scale, y: s - (oy + 30 * scale)))
     downPath.close()
     NSColor(red: 0xF5/255, green: 0xF5/255, blue: 0xF7/255, alpha: 0.25).setFill()
     downPath.fill()
