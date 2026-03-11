@@ -23,7 +23,7 @@ struct StatusPopoverView: View {
         HStack(alignment: .center) {
             HStack(spacing: 5) {
                 LogoMark()
-                    .frame(width: 10, height: 10)
+                    .frame(width: 24, height: 18)
                 Text("upto")
                     .font(.system(size: 14, weight: .bold))
             }
@@ -170,13 +170,30 @@ struct LogoMark: View {
 
     var body: some View {
         Canvas { context, size in
-            let path = Path { p in
-                p.move(to: CGPoint(x: size.width / 2, y: 0))
-                p.addLine(to: CGPoint(x: size.width, y: size.height))
-                p.addLine(to: CGPoint(x: 0, y: size.height))
+            // Map 72-unit viewBox to actual size
+            let s = min(size.width, size.height)
+            let scale = s / 72.0
+            let primaryColor = colorScheme == .dark
+                ? Color(red: 0xF5/255, green: 0xF5/255, blue: 0xF7/255)
+                : Color(red: 0x1D/255, green: 0x1D/255, blue: 0x1F/255)
+
+            // Up triangle (left) — full opacity
+            let upPath = Path { p in
+                p.move(to: CGPoint(x: 22 * scale, y: 14 * scale))
+                p.addLine(to: CGPoint(x: 40 * scale, y: 42 * scale))
+                p.addLine(to: CGPoint(x: 4 * scale, y: 42 * scale))
                 p.closeSubpath()
             }
-            context.fill(path, with: .color(.primary.opacity(colorScheme == .dark ? 0.85 : 0.8)))
+            context.fill(upPath, with: .color(primaryColor))
+
+            // Down triangle (right) — muted
+            let downPath = Path { p in
+                p.move(to: CGPoint(x: 50 * scale, y: 58 * scale))
+                p.addLine(to: CGPoint(x: 32 * scale, y: 30 * scale))
+                p.addLine(to: CGPoint(x: 68 * scale, y: 30 * scale))
+                p.closeSubpath()
+            }
+            context.fill(downPath, with: .color(primaryColor.opacity(0.25)))
         }
     }
 }

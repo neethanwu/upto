@@ -25,3 +25,6 @@ docs/
 
 # Design system
 *.html
+
+# Generated intermediates
+SupportFiles/AppIcon.iconset/
