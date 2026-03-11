@@ -3,7 +3,9 @@ BUNDLE_NAME = UpTo
 BUNDLE_DIR  = $(BUNDLE_NAME).app
 SIGN_IDENTITY ?= -
 
-.PHONY: build bundle sign dmg notarize release run clean
+-include .env
+
+.PHONY: build bundle sign notarize-app dmg release run clean
 
 # ── Build ──────────────────────────────────────────────
 
@@ -29,9 +31,25 @@ sign: bundle
 	codesign --force --options runtime --sign "$(SIGN_IDENTITY)" $(BUNDLE_DIR)
 	@echo "Signed: $(BUNDLE_DIR)"
 
-# ── DMG ────────────────────────────────────────────────
+# ── Notarize .app ─────────────────────────────────────
+#    Submit .app as zip → notarize → staple ticket onto .app
+#    This ensures the .app itself passes Gatekeeper after
+#    users drag it out of the DMG.
 
-dmg: sign
+notarize-app: sign
+	@rm -f $(BUNDLE_NAME).zip
+	ditto -c -k --keepParent $(BUNDLE_DIR) $(BUNDLE_NAME).zip
+	xcrun notarytool submit $(BUNDLE_NAME).zip \
+		--keychain-profile "hallidai-notarize" \
+		--wait
+	xcrun stapler staple $(BUNDLE_DIR)
+	@rm -f $(BUNDLE_NAME).zip
+	@echo "Notarized: $(BUNDLE_DIR)"
+
+# ── DMG ────────────────────────────────────────────────
+#    Built from the already-notarized + stapled .app
+
+dmg: notarize-app
 	@rm -f $(APP_NAME).dmg
 	create-dmg \
 		--volname "$(APP_NAME)" \
@@ -44,19 +62,10 @@ dmg: sign
 	codesign --force --sign "$(SIGN_IDENTITY)" $(APP_NAME).dmg
 	@echo "Created: $(APP_NAME).dmg"
 
-# ── Notarize ───────────────────────────────────────────
-
-notarize: dmg
-	xcrun notarytool submit $(APP_NAME).dmg \
-		--keychain-profile "notary" \
-		--wait
-	xcrun stapler staple $(BUNDLE_DIR)
-	xcrun stapler staple $(APP_NAME).dmg
-	@echo "Notarized: $(APP_NAME).dmg"
-
 # ── Release (full chain) ──────────────────────────────
+#    build → bundle → sign → notarize .app → dmg
 
-release: build bundle sign dmg notarize
+release: build bundle sign notarize-app dmg
 
 # ── Dev ────────────────────────────────────────────────
 
@@ -67,4 +76,4 @@ run: bundle
 # ── Clean ──────────────────────────────────────────────
 
 clean:
-	rm -rf .build $(BUNDLE_DIR) $(APP_NAME).dmg
+	rm -rf .build $(BUNDLE_DIR) $(APP_NAME).dmg $(BUNDLE_NAME).zip

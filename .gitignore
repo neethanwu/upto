@@ -12,6 +12,9 @@ xcuserdata/
 .build/
 Package.resolved
 
+# Secrets
+.env
+
 # Build outputs
 UpTo.app/
 *.dmg
