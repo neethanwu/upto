@@ -9,7 +9,7 @@ struct AtlassianProvider: StatusProvider {
 
         let overall = mapIndicator(summary.status.indicator)
         let components = summary.components
-            .filter { !$0.group && !($0.onlyShowIfDegraded && $0.status == "operational") }
+            .filter { !($0.group ?? false) && !(($0.onlyShowIfDegraded ?? false) && $0.status == "operational") }
             .map { ComponentStatus(name: $0.name, status: mapComponentStatus($0.status)) }
 
         return ServiceStatusResult(
@@ -60,9 +60,9 @@ private struct AtlassianSummary: Codable {
         let id: String
         let name: String
         let status: String
-        let position: Int
+        let position: Int?
         let groupId: String?
-        let group: Bool
-        let onlyShowIfDegraded: Bool
+        let group: Bool?
+        let onlyShowIfDegraded: Bool?
     }
 }

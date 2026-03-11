@@ -9,15 +9,28 @@ enum MenuBarIcon {
         case .majorOutage: .systemRed
         case .unknown: .systemGray
         }
-        return dotImage(color: color)
+        return triangleImage(color: color)
     }
 
-    private static func dotImage(color: NSColor) -> NSImage {
+    private static func triangleImage(color: NSColor) -> NSImage {
         let size = NSSize(width: 18, height: 18)
-        let image = NSImage(size: size, flipped: false) { _ in
+        let image = NSImage(size: size, flipped: true) { rect in
+            let path = NSBezierPath()
+            // Upward-pointing triangle, centered
+            let inset: CGFloat = 2.5
+            let bottom = rect.maxY - inset
+            let top = rect.minY + inset
+            let left = rect.minX + inset
+            let right = rect.maxX - inset
+            let midX = rect.midX
+
+            path.move(to: NSPoint(x: midX, y: top))
+            path.line(to: NSPoint(x: right, y: bottom))
+            path.line(to: NSPoint(x: left, y: bottom))
+            path.close()
+
             color.setFill()
-            let dotRect = NSRect(x: 4, y: 4, width: 10, height: 10)
-            NSBezierPath(ovalIn: dotRect).fill()
+            path.fill()
             return true
         }
         image.isTemplate = false

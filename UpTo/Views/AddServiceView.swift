@@ -6,37 +6,54 @@ struct AddServiceView: View {
     @State private var urlText = ""
     @State private var isAdding = false
     @State private var errorMessage: String?
+    @Environment(\.colorScheme) private var colorScheme
+
+    private var hasInput: Bool {
+        !urlText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 8) {
-                TextField("Status page URL", text: $urlText)
-                    .textFieldStyle(.roundedBorder)
-                    .font(.system(.caption))
+                TextField("Status page URL or RSS feed...", text: $urlText)
+                    .textFieldStyle(.plain)
+                    .font(.system(size: 13))
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(
+                        RoundedRectangle(cornerRadius: 6)
+                            .fill(Color.primary.opacity(colorScheme == .dark ? 0.06 : 0.04))
+                    )
                     .onSubmit { addService() }
 
-                Button {
-                    addService()
-                } label: {
-                    if isAdding {
-                        ProgressView()
-                            .controlSize(.small)
-                    } else {
-                        Text("Add")
-                            .font(.caption)
+                if isAdding {
+                    ProgressView()
+                        .controlSize(.small)
+                        .frame(width: 16, height: 16)
+                } else {
+                    // Confirm
+                    IconButton(systemName: "checkmark", color: hasInput ? .green : .secondary) {
+                        addService()
+                    }
+                    .disabled(!hasInput)
+                    .opacity(hasInput ? 1 : 0.15)
+
+                    // Dismiss
+                    IconButton(systemName: "xmark", color: .secondary) {
+                        withAnimation(.easeInOut(duration: 0.15)) {
+                            isShowing = false
+                        }
                     }
                 }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.small)
-                .disabled(urlText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isAdding)
             }
 
             if let errorMessage {
                 Text(errorMessage)
-                    .font(.caption2)
+                    .font(.system(size: 10))
                     .foregroundStyle(.red)
             }
         }
+        .padding(.bottom, 0)
     }
 
     private func addService() {
@@ -52,7 +69,6 @@ struct AddServiceView: View {
             return
         }
 
-        // Check for duplicates
         if monitor.services.contains(where: { $0.url == urlString || $0.statusPageURL == urlString }) {
             errorMessage = "Already monitoring this service"
             return
@@ -61,7 +77,6 @@ struct AddServiceView: View {
         isAdding = true
         errorMessage = nil
 
-        // Detect provider type by trying known patterns
         Task {
             let service = await detectAndCreateService(urlString)
             await MainActor.run {
@@ -74,12 +89,9 @@ struct AddServiceView: View {
     }
 
     private func detectAndCreateService(_ urlString: String) async -> MonitoredService {
-        // Try Atlassian Statuspage first
-        let atlassianURL = urlString.hasSuffix("/")
-            ? "\(urlString)api/v2/summary.json"
-            : "\(urlString)/api/v2/summary.json"
+        let base = urlString.hasSuffix("/") ? urlString : "\(urlString)/"
 
-        if let url = URL(string: atlassianURL),
+        if let url = URL(string: "\(base)api/v2/summary.json"),
            let (data, response) = try? await URLSession.shared.data(from: url),
            let http = response as? HTTPURLResponse,
            (200...299).contains(http.statusCode),
@@ -87,30 +99,24 @@ struct AddServiceView: View {
             return MonitoredService(
                 name: result.serviceName,
                 url: urlString,
-                dataURL: atlassianURL,
+                dataURL: "\(base)api/v2/summary.json",
                 providerType: .atlassian,
                 statusPageURL: result.statusPageURL
             )
         }
 
-        // Try RSS feed
-        let rssURL = urlString.hasSuffix("/")
-            ? "\(urlString)feed.xml"
-            : "\(urlString)/feed.xml"
-
-        if let url = URL(string: rssURL),
+        if let url = URL(string: "\(base)feed.xml"),
            let (data, _) = try? await URLSession.shared.data(from: url),
            String(data: data, encoding: .utf8)?.contains("<rss") == true {
             return MonitoredService(
                 name: "Custom",
                 url: urlString,
-                dataURL: rssURL,
+                dataURL: "\(base)feed.xml",
                 providerType: .xaiRSS,
                 statusPageURL: urlString
             )
         }
 
-        // Fallback: treat as-is
         return MonitoredService(
             name: "Custom",
             url: urlString,
@@ -118,5 +124,33 @@ struct AddServiceView: View {
             providerType: .htmlFallback,
             statusPageURL: urlString
         )
+    }
+}
+
+// MARK: - Small icon button for add service actions
+
+private struct IconButton: View {
+    let systemName: String
+    let color: Color
+    let action: () -> Void
+    @State private var isHovering = false
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: systemName)
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(color)
+                .frame(width: 26, height: 26)
+                .background(
+                    isHovering
+                        ? Color.primary.opacity(colorScheme == .dark ? 0.08 : 0.06)
+                        : .clear,
+                    in: RoundedRectangle(cornerRadius: 6)
+                )
+        }
+        .buttonStyle(.plain)
+        .onHover { isHovering = $0 }
+        .animation(.easeOut(duration: 0.15), value: isHovering)
     }
 }

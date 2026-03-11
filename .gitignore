@@ -1,26 +1,24 @@
-# Xcode
-build/
-DerivedData/
-*.xcodeproj/project.xcworkspace/
-*.xcodeproj/xcuserdata/
-*.xcworkspace/xcuserdata/
-xcuserdata/
-*.pbxuser
-*.mode1v3
-*.mode2v3
-*.perspectivev3
-*.xccheckout
-*.moved-aside
-
-# Swift Package Manager
-.build/
-Packages/
-Package.resolved
-
 # macOS
 .DS_Store
 *.swp
 *~
 
+# Xcode
+DerivedData/
+*.xcuserstate
+xcuserdata/
+
+# Swift Package Manager
+.build/
+Package.resolved
+
+# Build outputs
+UpTo.app/
+*.dmg
+build/
+
 # Docs (plans, brainstorms)
 docs/
+
+# Design system
+*.html

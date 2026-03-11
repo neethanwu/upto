@@ -7,6 +7,7 @@ class StatusMonitor {
     var services: [MonitoredService] = []
     var overallStatus: HealthStatus = .unknown
     var isRefreshing = false
+    var lastRefreshTime: Date?
 
     private var cancellable: AnyCancellable?
     private var previousStatuses: [UUID: HealthStatus] = [:]
@@ -83,6 +84,7 @@ class StatusMonitor {
             await MainActor.run {
                 self.updateOverallStatus()
                 self.isRefreshing = false
+                self.lastRefreshTime = Date()
                 self.saveServices()
             }
         }
@@ -94,7 +96,7 @@ class StatusMonitor {
         do {
             var request = URLRequest(url: url)
             request.timeoutInterval = 10
-            request.setValue("UpTo/1.0 (macOS)", forHTTPHeaderField: "User-Agent")
+            request.setValue("upto/1.0 (macOS)", forHTTPHeaderField: "User-Agent")
             let (data, response) = try await URLSession.shared.data(for: request)
 
             guard let httpResponse = response as? HTTPURLResponse,
