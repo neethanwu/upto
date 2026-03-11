@@ -1,5 +1,7 @@
 <p align="center">
-  <img src="assets/icon.png" width="80" alt="upto icon">
+  <br>
+  <img src="assets/icon.png" width="128" alt="upto icon">
+  <br>
 </p>
 
 <h1 align="center">upto</h1>
@@ -91,10 +93,6 @@ UpTo/
 └── Utilities/
     └── MenuBarIcon.swift          # Color-coded triangle icon renderer
 ```
-
-## Credits
-
-Built by [Neethan Wu](https://github.com/neethanwu). Design inspired by [Pier](https://github.com/neethanwu/pier).
 
 ## License
 
