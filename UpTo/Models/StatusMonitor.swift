@@ -108,7 +108,7 @@ class StatusMonitor {
             case .atlassian: atlassianProvider
             case .xaiRSS: xaiProvider
             case .googleCloud: googleProvider
-            case .htmlFallback: atlassianProvider // TODO: SwiftSoup fallback
+            case .htmlFallback: atlassianProvider // TODO: HTML fallback
             }
 
             return try provider.parseStatus(from: data, url: url)

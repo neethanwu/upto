@@ -7,13 +7,11 @@ let package = Package(
     platforms: [
         .macOS(.v14)
     ],
-    dependencies: [
-        .package(url: "https://github.com/scinfu/SwiftSoup.git", from: "2.6.0")
-    ],
+    dependencies: [],
     targets: [
         .executableTarget(
             name: "UpTo",
-            dependencies: ["SwiftSoup"],
+            dependencies: [],
             path: "UpTo",
             exclude: ["Resources"]
         )
