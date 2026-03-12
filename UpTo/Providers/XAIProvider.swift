@@ -38,7 +38,7 @@ struct XAIProvider: StatusProvider {
         }
 
         return ServiceStatusResult(
-            serviceName: "xAI / Grok",
+            serviceName: "xAI",
             overallStatus: overall,
             components: components,
             statusPageURL: "https://status.x.ai"

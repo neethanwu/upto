@@ -3,13 +3,18 @@ import SwiftUI
 @main
 struct UpToApp: App {
     @State private var monitor = StatusMonitor()
+    @State private var serverMonitor = ServerMonitor()
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
     var body: some Scene {
         MenuBarExtra {
-            StatusPopoverView(monitor: monitor)
+            StatusPopoverView(monitor: monitor, serverMonitor: serverMonitor)
         } label: {
-            Image(nsImage: MenuBarIcon.statusImage(for: monitor.overallStatus))
+            Image(nsImage: MenuBarIcon.statusImage(
+                for: monitor.overallStatus,
+                serverCount: serverMonitor.servers.count
+            ))
+            .renderingMode(.original)
         }
         .menuBarExtraStyle(.window)
     }

@@ -225,14 +225,14 @@ class StatusMonitor {
             statusPageURL: "https://status.openai.com"
         ),
         MonitoredService(
-            name: "xAI / Grok",
+            name: "xAI",
             url: "https://status.x.ai",
             dataURL: "https://status.x.ai/feed.xml",
             providerType: .xaiRSS,
             statusPageURL: "https://status.x.ai"
         ),
         MonitoredService(
-            name: "Google / Gemini",
+            name: "Gemini",
             url: "https://status.cloud.google.com",
             dataURL: "https://status.cloud.google.com/incidents.json",
             providerType: .googleCloud,

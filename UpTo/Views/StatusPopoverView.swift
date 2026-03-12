@@ -1,15 +1,30 @@
 import SwiftUI
 
+enum PopoverTab: String, CaseIterable {
+    case services = "Services"
+    case servers = "Servers"
+}
+
 struct StatusPopoverView: View {
     @Bindable var monitor: StatusMonitor
+    var serverMonitor: ServerMonitor
     @State private var showingAddForm = false
     @State private var refreshAngle: Double = 0
+    @State private var selectedTab: PopoverTab = .services
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             header
+            tabBar
             Divider().opacity(0.04).padding(.horizontal, 14)
-            serviceContent
+
+            switch selectedTab {
+            case .services:
+                serviceContent
+            case .servers:
+                ServerListView(monitor: serverMonitor)
+            }
+
             Divider().opacity(0.04).padding(.horizontal, 14)
             footer
         }
@@ -31,7 +46,7 @@ struct StatusPopoverView: View {
             Spacer()
 
             HStack(spacing: 4) {
-                if let lastChecked = monitor.lastRefreshTime {
+                if selectedTab == .services, let lastChecked = monitor.lastRefreshTime {
                     Text(relativeTime(lastChecked))
                         .font(.system(size: 10))
                         .foregroundStyle(.tertiary)
@@ -41,7 +56,11 @@ struct StatusPopoverView: View {
                     withAnimation(.linear(duration: 0.5)) {
                         refreshAngle += 360
                     }
-                    monitor.refresh()
+                    if selectedTab == .services {
+                        monitor.refresh()
+                    } else {
+                        Task { await serverMonitor.refresh() }
+                    }
                 } label: {
                     RefreshIcon()
                         .frame(width: 13, height: 13)
@@ -60,12 +79,52 @@ struct StatusPopoverView: View {
         .padding(.vertical, 12)
     }
 
+    // MARK: - Tab Bar
+
+    private var tabBar: some View {
+        HStack(spacing: 0) {
+            ForEach(PopoverTab.allCases, id: \.self) { tab in
+                Button {
+                    withAnimation(.easeOut(duration: 0.15)) {
+                        selectedTab = tab
+                    }
+                } label: {
+                    VStack(spacing: 4) {
+                        HStack(spacing: 5) {
+                            Text(tab.rawValue)
+                                .font(.system(size: 12, weight: selectedTab == tab ? .semibold : .regular))
+                                .foregroundStyle(selectedTab == tab ? .primary : .tertiary)
+
+                            if tab == .servers, serverMonitor.servers.count > 0 {
+                                Text("\(serverMonitor.servers.count)")
+                                    .font(.system(size: 8, weight: .bold, design: .monospaced))
+                                    .foregroundStyle(.white)
+                                    .frame(width: 16, height: 16)
+                                    .background(
+                                        Circle().fill(Color(red: 0x0A/255, green: 0x84/255, blue: 0xFF/255))
+                                    )
+                            }
+                        }
+
+                        Rectangle()
+                            .fill(selectedTab == tab ? Color.primary : .clear)
+                            .frame(height: 1.5)
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(.horizontal, 14)
+        .padding(.bottom, 4)
+    }
+
     // MARK: - Service Content
 
     @ViewBuilder
     private var serviceContent: some View {
         if monitor.services.isEmpty {
-            emptyState
+            emptyState(title: "No services", subtitle: "Add a status page to monitor")
         } else {
             ScrollView {
                 LazyVStack(spacing: 0) {
@@ -82,12 +141,12 @@ struct StatusPopoverView: View {
         }
     }
 
-    private var emptyState: some View {
+    private func emptyState(title: String, subtitle: String) -> some View {
         VStack(spacing: 4) {
-            Text("No services")
+            Text(title)
                 .font(.system(size: 13, weight: .medium))
                 .foregroundStyle(.secondary)
-            Text("Add a status page to monitor")
+            Text(subtitle)
                 .font(.system(size: 11))
                 .foregroundStyle(.tertiary)
         }
@@ -95,36 +154,55 @@ struct StatusPopoverView: View {
         .padding(.vertical, 24)
     }
 
-    // MARK: - Footer (fixed height, fade transition)
+    // MARK: - Footer (adapts per tab)
 
     private var footer: some View {
         ZStack {
-            // Add Service button
-            HStack(spacing: 5) {
-                Image(systemName: "plus")
-                    .font(.system(size: 11, weight: .semibold))
-                Text("Add Service")
-                    .font(.system(size: 12, weight: .medium))
-                Spacer()
-            }
-            .foregroundStyle(.secondary)
-            .opacity(showingAddForm ? 0 : 1)
-            .contentShape(Rectangle())
-            .onTapGesture {
-                withAnimation(.easeOut(duration: 0.2)) {
-                    showingAddForm = true
+            if selectedTab == .services {
+                // Add Service button
+                HStack(spacing: 5) {
+                    Image(systemName: "plus")
+                        .font(.system(size: 11, weight: .semibold))
+                    Text("Add Service")
+                        .font(.system(size: 12, weight: .medium))
+                    Spacer()
+                }
+                .foregroundStyle(.secondary)
+                .opacity(showingAddForm ? 0 : 1)
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    withAnimation(.easeOut(duration: 0.2)) {
+                        showingAddForm = true
+                    }
+                }
+
+                // Add form
+                AddServiceView(monitor: monitor, isShowing: $showingAddForm)
+                    .opacity(showingAddForm ? 1 : 0)
+                    .allowsHitTesting(showingAddForm)
+            } else {
+                // Server count
+                HStack(spacing: 5) {
+                    Text(serverCountText)
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(.secondary)
+                    Spacer()
                 }
             }
-
-            // Add form
-            AddServiceView(monitor: monitor, isShowing: $showingAddForm)
-                .opacity(showingAddForm ? 1 : 0)
-                .allowsHitTesting(showingAddForm)
         }
         .frame(height: 32)
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
         .animation(.easeOut(duration: 0.2), value: showingAddForm)
+    }
+
+    private var serverCountText: String {
+        let count = serverMonitor.servers.count
+        switch count {
+        case 0: return "No servers"
+        case 1: return "1 server"
+        default: return "\(count) servers"
+        }
     }
 
     private func relativeTime(_ date: Date) -> String {

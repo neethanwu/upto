@@ -41,7 +41,7 @@ struct GoogleCloudProvider: StatusProvider {
         }
 
         return ServiceStatusResult(
-            serviceName: "Google / Gemini",
+            serviceName: "Gemini",
             overallStatus: overall,
             components: components,
             statusPageURL: "https://status.cloud.google.com"
